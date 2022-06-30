@@ -1,6 +1,6 @@
 from statistics import mode
-# from django.db import models
-from djongo import models
+from django.db import models
+# from djongo import models
 
 
 

@@ -93,12 +93,23 @@ WSGI_APPLICATION = 'website_ngetik_cepat.wsgi.application'
 # }
 
 DATABASES = {
+
     'default': {
-        'ENGINE': 'djongo',
-        'NAME': 'db',
-        'HOST': '127.0.0.1',
-        'PORT': 27017,
+
+        'ENGINE': 'django.db.backends.postgresql',
+
+        'NAME': 'postgres',
+
+        'USER': 'postgres',
+
+        'PASSWORD': 'Analuam1357924680',
+
+        'HOST': 'localhost',
+
+        'PORT': '5432',
+
     }
+
 }
 
 
