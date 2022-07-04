@@ -30,6 +30,7 @@ class UserTestResults(models.Model):
     user_id = models.IntegerField(blank=False)
     speed = models.IntegerField(blank=False)
     test_type = models.CharField(max_length=100,blank=False)
+    timestamp = models.DateTimeField(auto_now_add=True, null=True, blank=True)
 
 # class WordsList(models.Model):
 #     words = models.CharField(max_length=100, blank=False)

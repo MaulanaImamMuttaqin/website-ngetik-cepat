@@ -24,7 +24,7 @@ def recommend_words_based_on_pattern(sim_matrix,  length):
 
     for r in sim_matrix:
         # print(r["word"])
-        similarity_matrix = json.loads(r["matrix"])
+        similarity_matrix = r["matrix"]
         similarity_score = list(enumerate(similarity_matrix))
         #sort in descending order the similarity score of movie inputted with all the other movies
         similarity_score = sorted(similarity_score, key=lambda x: x[1], reverse=True)
@@ -40,8 +40,8 @@ def recommend_words_based_on_pattern(sim_matrix,  length):
 
 def recommend_words_based_collaborative(user_scores, user_id, length):
 
-    df= user_scores.drop_duplicates(subset = ['user_id', 'item_id'], keep="last")
-    utility = df.pivot(index = 'item_id', columns = 'user_id', values = 'rating')
+    df= user_scores
+    utility = user_scores.pivot(index = 'item_id', columns = 'user_id', values = 'rating')
     utility = utility.fillna(0)
 
     unique_item = np.sort(df['item_id'].unique())

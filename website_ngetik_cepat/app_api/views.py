@@ -6,8 +6,8 @@ from rest_framework.response import Response
 from rest_framework import status
 from .utils import pickRandValues, recommend_words_based_collaborative, recommend_words_based_on_pattern
 from .words import words, words_easy
-from .models import Test, UsersScores, WordsSimMatrix
-from .serializers import TestSerializer, UserScoresSerializer, WordsSimMatrixSerializer
+from .models import Test, UserTestResults, UsersScores, WordsSimMatrix
+from .serializers import TestSerializer, UserScoresSerializer, UserTestResultsSerializer, WordsSimMatrixSerializer
 from django.contrib.auth import get_user_model
 from rest_framework.permissions import IsAuthenticated
 from auth_api.serializers import UserSerializer
@@ -50,7 +50,7 @@ class UserProfile(generics.RetrieveUpdateAPIView):
                     "message" : "Success Fetching user profile"
                 })
 
-class TestResult(generics.CreateAPIView, generics.UpdateAPIView):
+class UserScores(generics.CreateAPIView, generics.UpdateAPIView):
     # serializer_class = UsersScores
     # queryset = UsersScores.objects.all()
 
@@ -58,14 +58,52 @@ class TestResult(generics.CreateAPIView, generics.UpdateAPIView):
         # pprint(request.data["word_scored"])
         datas = request.data["word_scored"]
         # print(datas)
-        serializer = UserScoresSerializer(data=datas, many=True)
+        for d in datas:
+            print(d)
+            UsersScores.objects.update_or_create(user_id = d["user_id"], item_id = d["item_id"], defaults=d)
+        # serializer = UserScoresSerializer(data=datas, many=True)
+        # serializer.is_valid(raise_exception=True)
+        # self.perform_create(serializer)
+        # headers = self.get_success_headers(serializer.data)
+        return Response(datas, status=status.HTTP_201_CREATED)
+        # return Response(datas, status=status.HTTP_201_CREATED)
+
+
+
+class TestResult(generics.CreateAPIView, generics.RetrieveAPIView):
+    # serializer_class = UsersScores
+    # queryset = UsersScores.objects.all()
+
+    def create(self, request, *args, **kwargs):
+        # pprint(request.data["word_scored"])
+        datas = request.data
+        # print(datas)
+        serializer = UserTestResultsSerializer(data=datas)
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
         return Response(datas, status=status.HTTP_201_CREATED, headers=headers)
-        # return Response(datas, status=status.HTTP_201_CREATED)
+    
+    def Average(self, l):
+        return sum(l) / len(l)
 
+    def retrieve(self, request,user_id, *args, **kwargs):
+        print(user_id)
+        results = UserTestResults.objects.all().filter(user_id=user_id).order_by('timestamp')
+        serializer = UserTestResultsSerializer(results, many=True)
+        newlist = sorted(serializer.data, key=lambda d: d['speed'] , reverse=True)
 
+        speed_list = [x["speed"] for x in newlist]
+        average = self.Average(speed_list)
+        # average = self.Average([x["speed"] for x in newlist])
+        print(serializer.data[-10:])
+        new_data = {
+            "top_speed" : newlist[0]["speed"],
+            "low_speed" : newlist[-1]["speed"],
+            "avg": int(average),
+            "speeds" : serializer.data[-10:]
+        }
+        return Response(new_data, status=status.HTTP_200_OK)
 
 
 class GetRecommendation(generics.RetrieveAPIView):
@@ -79,19 +117,20 @@ class GetRecommendation(generics.RetrieveAPIView):
 
         scores_df = pd.DataFrame(score_serializer.data)
 
-        print(scores_df.head())
+        # print(scores_df.head())
         # user_history = UsersScores.objects.all().filter(user_id=user_id)
         # history_serializer = UserScoresSerializer(user_history, many=True)
 
-        print(user_id)
+        print("user id = ", user_id)
         all_user_data = scores_df.query(f"user_id == {user_id}")
         df= all_user_data.drop_duplicates(subset = ['user_id', 'item_id'], keep="last")
         highest_rating = df.sort_values(by='rating', ascending=False)
-        print(highest_rating.head(20))
+        print(highest_rating.shape)
+
         if len(highest_rating) == 0:
             word_list = pickRandValues(words, 30)
             return Response({"words" : word_list}, status=status.HTTP_200_OK) 
-        print(highest_rating.iloc[:10,3].tolist())
+        # print(highest_rating.iloc[:10,3].tolist())
 
 
         matrix = WordsSimMatrix.objects.filter(word__in= highest_rating.iloc[:2,3].tolist())

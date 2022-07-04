@@ -1,6 +1,6 @@
 from dataclasses import field, fields
 from rest_framework import serializers
-from .models import Test, UsersScores, WordsSimMatrix
+from .models import Test, UserTestResults, UsersScores, WordsSimMatrix
 
 class TestSerializer(serializers.ModelSerializer):
     class Meta:
@@ -17,6 +17,10 @@ class UserScoresSerializer(serializers.ModelSerializer):
         model = UsersScores
         fields = ('user_id', 'item_id', 'rating', 'word', 'sd', 'timestamp',)
 
+class UserTestResultsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserTestResults
+        fields = '__all__'
 
 class WordsSimMatrixSerializer(serializers.ModelSerializer):
     class Meta:
